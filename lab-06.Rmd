@@ -58,12 +58,17 @@ fisheries <- read_csv("data/fisheries.csv")
 
 ```
 
+#got some help from Elayna, but need to ask her again. I think I need to specifiy what values go into harvest.
 ```{r}
 filtered_fisheries<-fisheries %>% 
 filter(total>600000)
 
+filtered_fisheries <- filtered_fisheries %>%
+  pivot_longer(cols = -country, names_to = "harvest") %>%
+  mutate(value = as.numeric(value))
+
 filtered_fisheries %>% 
-  ggplot(aes(x = country, y = capture)) +
+  ggplot(aes(x = country, y = value, fill = harvest)) +
   geom_col()
 
 ```
@@ -92,6 +97,8 @@ Smokers live shorter lives than non smokers. Higher mortality rate too probably.
 ### Exercise 7
 Create a visualization depicting the relationship between smoking status and health outcome. Briefly describe the relationship, and evaluate whether this meets your expectations. Additionally, calculate the relevant conditional probabilities to help your narrative. Here is some code to get you started:
 
+There does not appear to be a relationship between smoking status and health outcome...Although I think that would change if we were to look at age of "outcome" aka death. 
+
 ```{r}
 Whickham %>%
   count(smoker, outcome) -> count
@@ -100,16 +107,28 @@ count %>%
 ggplot(aes(x = smoker, y = n, fill = outcome)) +
   geom_bar(stat="identity", position=position_dodge())
 
+Whickham %>% 
+  count(smoker, outcome) %>% 
+  group_by(smoker) %>% 
+  mutate(Percentage = n / sum(n))
+
 ```
 
 
-ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
-geom_bar(stat="identity", position=position_dodge())
 ### Exercise 8
 Create a new variable called age_cat using the following scheme:
 age <= 44 ~ "18-44"
 age > 44 & age <= 64 ~ "45-64"
 age > 64 ~ "65+"
+
+```{r new variable}
+Whickham <- Whickham %>% 
+  mutate(age_cat = case_when(
+    age <= 44 ~"18-44",
+    age > 44 & age <= 64 ~ "44-64",
+    age > 64 ~ "65+"))
+```
+
 
 ### Exercise 9
 Re-create the visualization depicting the relationship between smoking status and health outcome, faceted by age_cat. What changed? What might explain this change? Extend the contingency table from earlier by breaking it down by age category and use it to help your narrative.
@@ -117,5 +136,17 @@ Re-create the visualization depicting the relationship between smoking status an
 ```{r}
 Whickham %>%
   count(smoker, age_cat, outcome)
+
+Whickham %>% 
+  ggplot(aes(x = smoker, fill = outcome)) +
+  geom_bar()+
+  facet_wrap(~age_cat)
+
+Whickham %>% 
+  count(smoker, outcome, age_cat) %>% 
+  group_by(smoker, age_cat) %>% 
+  mutate(Percentage = n / sum(n))
+
 ```
 
+Now when  you look at the effect of smoking with age....People who smoke die at younger ages than those who don't smoke. This suggests that smoking decreases people's lifespans. 
